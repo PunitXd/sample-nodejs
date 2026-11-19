@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: punitxd-sample-nodejs
+  namespace: kairo-punitxd-sample-nodejs
+  labels:
+    app: punitxd-sample-nodejs
+    app.kubernetes.io/managed-by: kairo
+spec:
+  replicas: 1
+  # rollback needs old ReplicaSets to still be around
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: punitxd-sample-nodejs
+  template:
+    metadata:
+      labels:
+        app: punitxd-sample-nodejs
+        app.kubernetes.io/managed-by: kairo
+    spec:
+      containers:
+        - name: punitxd-sample-nodejs
+          image: kairo/punitxd-sample-nodejs:2bb2580764a0f98aeecc8c4cf8a9f70a7a4bf254
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          # liveness + memory limit are what make self-healing possible.
+          # don't remove them without talking to BE 2
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
